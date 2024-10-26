@@ -2,4 +2,8 @@
 indent-width = 2
 
 [tool.ruff.lint]
-select = ["E", "F"]
+select = ["D", "E", "F"]
+ignore = ["D100", "E501"] # Ignore "Missing docstring in public module" and "Line to long"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

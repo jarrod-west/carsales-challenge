@@ -1,11 +1,10 @@
-from pyspark.sql import SparkSession, DataFrame
-from os.path import join
-
 import logging
+from os.path import join
+from pyspark.sql import SparkSession, DataFrame
 
 from challenge.invoices import (
-  upcoming_invoices,
-  account_invoice_totals,
+  outstanding_invoices,
+  outstanding_account_totals,
   InvoiceDataFrames,
 )
 
@@ -17,8 +16,16 @@ logger = logging.getLogger()
 spark = SparkSession.builder.getOrCreate()
 
 
-def read_csv(filename: str) -> DataFrame:
-  csv_path = join(CSV_PATH, f"{filename}.csv")
+def read_csv(name: str) -> DataFrame:
+  """Read one of the sample CSV files into a data frame.
+
+  Args:
+      name (str): The name of the CSV (not including extension)
+
+  Returns:
+      pyspark.sql.DataFrame: The CSV data as a data frame
+  """
+  csv_path = join(CSV_PATH, f"{name}.csv")
   logger.debug(f"Loading: ${csv_path}")
   return spark.read.options(multiline=True).csv(
     csv_path, header=True, inferSchema=True, mode="FAILFAST"
@@ -26,6 +33,7 @@ def read_csv(filename: str) -> DataFrame:
 
 
 def main() -> None:
+  """Run an example using the provided CSV lines, showing the results."""
   logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -51,10 +59,10 @@ def main() -> None:
     }
 
     logger.info("Upcoming invoices")
-    upcoming_invoices(data_frames).show()
+    outstanding_invoices(data_frames).show()
 
     logger.info("Account invoice totals")
-    account_invoice_totals(data_frames).show()
+    outstanding_account_totals(data_frames).show()
 
   except Exception as ex:
     logger.error(f"Error: ${ex}")
