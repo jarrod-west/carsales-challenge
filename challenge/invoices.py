@@ -32,8 +32,10 @@ def _detailed_invoices(data_frames: InvoiceDataFrames) -> DataFrame:
       pyspark.sql.DataFrame: A dataframe containing the invoice_id, invoice_total, and account details
   """
   invoice_totals = _invoice_totals(data_frames)
-  return invoice_totals.join(data_frames["invoices"], "invoice_id").join(
-    data_frames["accounts"], "account_id"
+  return (
+    invoice_totals.join(data_frames["invoices"], "invoice_id")
+    .join(data_frames["accounts"], "account_id")
+    .sort("date_issued", col("invoice_total").desc(), "invoice_id")
   )
 
 
@@ -67,10 +69,8 @@ def outstanding_account_totals(data_frames: InvoiceDataFrames) -> DataFrame:
       pyspark.sql.DataFrame: A dataframe containing the account_total, oldest_issue_date, and account contact details
   """
   detailed_invoices = _detailed_invoices(data_frames)
-  account_totals = (
-    detailed_invoices.orderBy("date_issued")
-    .groupBy("account_id")
-    .agg(round(sum("invoice_total"), 2).alias("account_total"))
+  account_totals = detailed_invoices.groupBy("account_id").agg(
+    round(sum("invoice_total"), 2).alias("account_total")
   )
   account_earliest_issued = detailed_invoices.groupBy("account_id").agg(
     min("date_issued").alias("oldest_issue_date")
