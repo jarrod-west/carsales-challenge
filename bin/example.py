@@ -35,8 +35,15 @@ def read_csv(name: str) -> DataFrame:
   )
 
 
-def write_csv(name: str, timestamp: datetime.date, data: DataFrame) -> None:
-  file_path = join(OUT_DIR, f"{name}_{timestamp.strftime('%Y-%m-%d_%H-%M-%S')}.csv")
+def write_csv(name: str, timestamp: datetime, data: DataFrame) -> None:
+  """Write a dataframe to a CSV file.  Note that Spark will automatically write an entire directory assuming large, multi-part datasets.
+
+  Args:
+    name (str): The base name of the output file (directory)
+    timestamp (datetime): The generation time, used as a suffix to the output to ensure uniqueness
+    data (DataFrame): The DataFrame to write
+  """
+  file_path = join(OUT_DIR, f"{name}_{timestamp.strftime('%Y-%m-%d_%H-%M-%S')}")
   data.coalesce(1).write.csv(file_path, header=True)
 
 
@@ -62,10 +69,6 @@ def main(write_to_file: bool) -> None:
     if write_to_file:
       timestamp = datetime.now(timezone.utc)
       logger.info(f"Writing to files at '{OUT_DIR}'")
-      # outstanding_inv.coalesce(1).write.format('com.databricks.spark.csv').save(join(OUT_DIR, f"outstanding_invoices_{file_suffix}.csv"))
-      # outstanding_acc.coalesce(1).write.format('com.databricks.spark.csv').save(join(OUT_DIR, f"outstanding_account_totals_{file_suffix}.csv"))
-
-      # outstanding_inv.toPandas().to_csv(join(OUT_DIR, f"outstanding_invoices_{file_suffix}.csv"), index=False)
       write_csv("OutstandingInvoices", timestamp, outstanding_inv)
       write_csv("OutstandingAccountTotals", timestamp, outstanding_acc)
     else:
